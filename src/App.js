@@ -3,9 +3,9 @@ import Sketch from 'react-p5';
 import {useRef, useState} from 'react';
 import {Controls} from './Controls';
 import {Point} from './Point';
+import {hot} from 'react-hot-loader';
 
 const config = {
-  // canvasSize: {height: window.innerHeight, width: window.innerWidth},
   canvasSize: {height: 800, width: 800},
   drawInitialPoint: true,
   speed: 50,
@@ -13,17 +13,15 @@ const config = {
 };
 
 function App() {
-  const [run, setRun] = useState(false);
-  // const [topPoint, setTopPoint] = useState(new Point(0, 0));
-  // const [leftPoint, setLeftPoint] = useState(new Point(0, 0));
-  // const [rightPoint, setRightPoint] = useState(new Point(0, 0));
+  const [isStarted, setStarted] = useState(false);
+  const [canvasInstance, setCanvasInstance] = useState(null);
   const elementRef = useRef(null);
+  let initialPoint = new Point(0, 0); // state not used because it's really slow
 
   const margin = 15;
   const topPoint = new Point(config.canvasSize.width / 2, margin);
   const leftPoint = new Point(margin, config.canvasSize.height - margin);
   const rightPoint = new Point(config.canvasSize.width - margin, config.canvasSize.height - margin);
-  let initialPoint = new Point(0, 0);
 
   // get random point within triangle
   const randomInitialPoint = (p5) => {
@@ -46,19 +44,17 @@ function App() {
     return new Point(qx, qy);
   };
 
-  //draw initial three points of triangle
+  // draw initial three points of triangle
   const drawTriangle = (p5) => {
-    // const topPoint = new Point(config.canvasSize.width / 2, margin);
-    // const leftPoint = new Point(margin, config.canvasSize.height - margin);
-    // const rightPoint = new Point(config.canvasSize.width - margin, config.canvasSize.height - margin);
-
-    // setTopPoint(new Point(config.canvasSize.width / 2, margin));
-    // setLeftPoint(new Point(margin, config.canvasSize.height - margin));
-    // setRightPoint(new Point(config.canvasSize.width - margin, config.canvasSize.height - margin));
     p5.fill(0);
     p5.circle(topPoint.x, topPoint.y, 5);
     p5.circle(leftPoint.x, leftPoint.y, 5);
     p5.circle(rightPoint.x, rightPoint.y, 5);
+  };
+
+  const initActions = (p5) => {
+    initialPoint = randomInitialPoint(p5);
+    drawTriangle(p5);
   };
 
   const drawRandomPoint = (p5) => {
@@ -71,13 +67,12 @@ function App() {
   };
 
   const setup = (p5, canvasParentRef) => {
-    // p5.createCanvas(p5.windowHeight, p5.windowWidth).parent(canvasParentRef);
     p5.createCanvas(config.canvasSize.height, config.canvasSize.width).parent(canvasParentRef);
-
-    initialPoint = randomInitialPoint(p5);
-    drawTriangle(p5);
+    initActions(p5);
+    setCanvasInstance(p5);
   };
 
+  // with 'config.speed' it's possible to control how quickly a triangle will be drawn
   const draw = (p5) => {
     for (let i = 0; i < config.speed; i++) {
       drawRandomPoint(p5);
@@ -86,24 +81,36 @@ function App() {
 
   const windowResized = (p5) => {
     p5.resizeCanvas(window.innerHeight, window.innerWidth);
+    resetAction();
   };
 
   const pauseAction = () => {
-    setRun(false);
+    setStarted(false);
   };
 
   const playAction = () => {
-    setRun(true);
+    setStarted(true);
   };
 
-  console.log(elementRef.current?.clientHeight);
+  const resetAction = () => {
+    setStarted(false);
+    canvasInstance.clear();
+    initActions(canvasInstance);
+  };
 
   return (
     <div className="App" ref={elementRef}>
-      <Controls run={run} play={playAction} pause={pauseAction} />
-      <Sketch setup={setup} draw={run ? draw : () => {}} windowResized={windowResized} />
+      <Controls
+        actions={{
+          isStarted,
+          play: playAction,
+          pause: pauseAction,
+          reset: resetAction,
+        }}
+      />
+      <Sketch setup={setup} draw={isStarted ? draw : () => {}} windowResized={windowResized} />
     </div>
   );
 }
 
-export default App;
+export default process.env.NODE_ENV === 'development' ? hot(module)(App) : App;
