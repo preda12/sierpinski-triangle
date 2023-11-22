@@ -8,3 +8,5 @@ Run project:
 
 1. `npm i`
 2. `npm start`
+
+Live version: https://sierpinski-triangle-46t.pages.dev/
