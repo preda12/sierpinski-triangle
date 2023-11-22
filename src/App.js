@@ -12,7 +12,7 @@ const config = {
   speed: toInt(process.env.REACT_APP_SPEED, 50),
   ratio: toInt(process.env.REACT_APP_RATIO, 2),
 };
- const allPoints = [];
+ let allPoints = [];
 
 function App() {
   const [isStarted, setStarted] = useState(false);
@@ -138,6 +138,7 @@ function App() {
   const resetAction = () => {
     setStarted(false);
     stopInterval()
+    allPoints = [];
     canvasInstance.clear();
     initActions(canvasInstance);
   };
