@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import {toInt, toBool} from './envHelper';
 import Sketch from 'react-p5';
