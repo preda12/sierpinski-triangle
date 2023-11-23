@@ -1,10 +1,10 @@
+import logo from './logo.svg';
 import './App.css';
+import {toInt, toBool} from './envHelper';
 import Sketch from 'react-p5';
 import {useEffect, useRef, useState} from 'react';
 import {Controls} from './Controls';
 import {Point} from './Point';
-import {hot} from 'react-hot-loader';
-import {toInt, toBool} from './envHelper'
 
 const config = {
   canvasSize: {height: toInt(process.env.REACT_APP_CANVAS_HEIGHT, 800), width: toInt(process.env.REACT_APP_CANVAS_WEIGHT, 800)},
@@ -12,20 +12,19 @@ const config = {
   speed: toInt(process.env.REACT_APP_SPEED, 50),
   ratio: toInt(process.env.REACT_APP_RATIO, 2),
 };
- let allPoints = [];
+let allPoints = [];
 
 function App() {
   const [isStarted, setStarted] = useState(false);
   const [canvasInstance, setCanvasInstance] = useState(null);
-  const [isStartingPointShown, setStarttingPointFlag] = useState(config.drawInitialPoint);
+  const [isStartingPointShown, setStartingPointFlag] = useState(config.drawInitialPoint);
+  const [interval, _setInterval] = useState(null);
 
   const [initX, setInitX] = useState(0);
   const [initY, setInitY] = useState(0);
 
   const elementRef = useRef(null);
   let randomPoint = new Point(0, 0); // state not used because it's really slow
-
-  const [interval, _setInterval] = useState(null);
 
   const margin = 15;
   const topPoint = new Point(config.canvasSize.width / 2, margin);
@@ -64,7 +63,9 @@ function App() {
   };
 
   const generateRandomPoint = (p5) => {
-    if(allPoints.length > 1000000) { return }
+    if (allPoints.length > 1000000) {
+      return;
+    }
 
     for (let index = 0; index < 50; index++) {
       const randomTrianglePoint = p5.random([topPoint, leftPoint, rightPoint]);
@@ -72,13 +73,11 @@ function App() {
         x: (randomTrianglePoint.x + randomPoint.x) / config.ratio,
         y: (randomTrianglePoint.y + randomPoint.y) / config.ratio,
       };
-      allPoints.push(randomPoint)
+      allPoints.push(randomPoint);
     }
   };
 
-  useEffect(() => {
-
-  }, [])
+  useEffect(() => {}, []);
 
   const setup = (p5, canvasParentRef) => {
     p5.createCanvas(config.canvasSize.height, config.canvasSize.width).parent(canvasParentRef);
@@ -87,20 +86,20 @@ function App() {
   };
 
   const drawInitialPoint = (p5) => {
-    if(isStartingPointShown){
-       p5.fill(255, 0, 0);
+    if (isStartingPointShown) {
+      p5.fill(255, 0, 0);
       p5.circle(initX, initY, 5);
     }
-  }
+  };
 
   const draw = (p5) => {
-    p5.clear()
-    drawInitialPoint(p5)
+    p5.clear();
+    drawInitialPoint(p5);
     drawTriangle(p5);
 
-    for (let i = 0; i < allPoints.length; i++) {
+    for (const point of allPoints) {
       p5.fill(0);
-      canvasInstance.point(allPoints[i].x, allPoints[i].y);
+      canvasInstance.point(point.x, point.y);
     }
   };
 
@@ -111,41 +110,43 @@ function App() {
 
   const pauseAction = () => {
     setStarted(false);
-    stopInterval()
+    stopInterval();
   };
 
   // with 'config.speed' it's possible to control how quickly a triangle will be drawn
   const startInterval = () => {
-    if(!interval) {
-      _setInterval(setInterval(() => {
-        generateRandomPoint(canvasInstance)
-      }, config.speed))
+    if (!interval) {
+      _setInterval(
+        setInterval(() => {
+          generateRandomPoint(canvasInstance);
+        }, config.speed)
+      );
     }
-  }
+  };
 
   const stopInterval = () => {
-    if(interval){
-      clearInterval(interval)
-      _setInterval(null)
+    if (interval) {
+      clearInterval(interval);
+      _setInterval(null);
     }
-  }
+  };
 
   const playAction = () => {
     setStarted(true);
-    startInterval()
+    startInterval();
   };
 
   const resetAction = () => {
     setStarted(false);
-    stopInterval()
+    stopInterval();
     allPoints = [];
     canvasInstance.clear();
     initActions(canvasInstance);
   };
 
   const showStartingPoint = (flag) => {
-    setStarttingPointFlag(flag)
-  }
+    setStartingPointFlag(flag);
+  };
 
   return (
     <div className="App" ref={elementRef}>
@@ -155,7 +156,7 @@ function App() {
           play: playAction,
           pause: pauseAction,
           reset: resetAction,
-          showStartingPoint
+          showStartingPoint,
         }}
         isStartingPointShown={isStartingPointShown}
       />
@@ -164,4 +165,4 @@ function App() {
   );
 }
 
-export default process.env.NODE_ENV === 'development' ? hot(module)(App) : App;
+export default App;
